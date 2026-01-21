@@ -6,6 +6,7 @@
     <title>TaskingTasker - Project Platform</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         /* Reset and Base Styles */
         * {
@@ -441,7 +442,9 @@
             font-size: 14px;
         }
 
-        .form-group input {
+        .form-group input, 
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 15px 20px;
             border: 2px solid #e0e0e0;
@@ -449,9 +452,17 @@
             font-size: 16px;
             transition: all 0.3s ease;
             background: #f8f9fa;
+            font-family: 'Inter', sans-serif;
         }
 
-        .form-group input:focus {
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
@@ -479,10 +490,15 @@
             width: 100%;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: linear-gradient(135deg, #2980b9 0%, #1f639b 100%);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-secondary {
@@ -495,6 +511,106 @@
         .btn-secondary:hover {
             background: #d5dbdb;
             transform: translateY(-2px);
+        }
+
+        /* Notification Forms */
+        .notification-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-section h3 i {
+            color: #3498db;
+        }
+
+        .notification-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .notification-tab {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .notification-tab:hover {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .notification-tab.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .notification-form {
+            display: none;
+        }
+
+        .notification-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .form-status.success {
+            background: #e8f5e9;
+            color: #27ae60;
+            border: 2px solid #2ecc71;
+            display: block;
+        }
+
+        .form-status.error {
+            background: #ffebee;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+            display: block;
+        }
+
+        .form-status.sending {
+            background: #e3f2fd;
+            color: #3498db;
+            border: 2px solid #3498db;
+            display: block;
+        }
+
+        .form-status.sending i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         /* Warning Section */
@@ -738,6 +854,14 @@
                 align-items: center;
                 gap: 15px;
             }
+            
+            .notification-tabs {
+                flex-direction: column;
+            }
+            
+            .notification-tab {
+                text-align: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -818,7 +942,7 @@
             <div class="announcement-content">
                 <h3>Important Announcement</h3>
                 <p>Projects are only available during scheduled work sessions. Check availability below.</p>
-                <p><strong>Best way to get noticed quickly:</strong> Send email directly to aada.technology@gmail.com</p>
+                <p><strong>Quick Notifications:</strong> Use the notification forms below to report issues instantly.</p>
             </div>
         </div>
 
@@ -840,7 +964,7 @@
             
             <div class="info-item">
                 <h4><i class="fas fa-envelope"></i> Communication</h4>
-                <p>All communication through aada.technology@gmail.com</p>
+                <p>All communication through EmailJS notifications</p>
             </div>
         </div>
 
@@ -873,18 +997,166 @@
             <div id="email-form" class="email-form" style="display: none;">
                 <div class="form-group">
                     <label for="user-email">Your Email Address</label>
-                    <input type="email" id="user-email" placeholder="your.email@example.com">
+                    <input type="email" id="user-email" placeholder="your.email@example.com" required>
                 </div>
                 
                 <button id="request-access" class="btn btn-primary">
                     <i class="fas fa-paper-plane"></i> Request Project Access
                 </button>
                 
-                <button id="email-directly" class="btn btn-secondary">
-                    <i class="fas fa-envelope"></i> Or Email Directly (Recommended)
+                <div id="form-status"></div>
+            </div>
+        </div>
+
+        <!-- Notification Section -->
+        <div class="notification-section">
+            <h3><i class="fas fa-bell"></i> Send Notifications</h3>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Use these forms to send instant notifications to the admin team.</p>
+            
+            <div class="notification-tabs">
+                <div class="notification-tab active" data-form="access-request">Access Request</div>
+                <div class="notification-tab" data-form="issue-report">Report Issue</div>
+                <div class="notification-tab" data-form="hours-submission">Submit Hours</div>
+                <div class="notification-tab" data-form="disconnection">Disconnection Report</div>
+            </div>
+            
+            <!-- Access Request Form -->
+            <div id="access-request-form" class="notification-form active">
+                <div class="form-group">
+                    <label for="access-email">Your Email *</label>
+                    <input type="email" id="access-email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="access-message">Additional Notes (Optional)</label>
+                    <textarea id="access-message" placeholder="Any additional information you'd like to include..."></textarea>
+                </div>
+                
+                <button id="send-access-request" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send Access Request
                 </button>
                 
-                <p id="form-status" style="margin-top: 15px; color: #7f8c8d; font-size: 14px;"></p>
+                <div id="access-form-status" class="form-status"></div>
+            </div>
+            
+            <!-- Issue Report Form -->
+            <div id="issue-report-form" class="notification-form">
+                <div class="form-group">
+                    <label for="issue-email">Your Email *</label>
+                    <input type="email" id="issue-email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="issue-type">Issue Type *</label>
+                    <select id="issue-type" required>
+                        <option value="">Select issue type</option>
+                        <option value="technical">Technical Problem</option>
+                        <option value="guideline">Guideline Confusion</option>
+                        <option value="tool">Tool Malfunction</option>
+                        <option value="other">Other Issue</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="issue-description">Description *</label>
+                    <textarea id="issue-description" placeholder="Please describe the issue in detail..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rustdesk-id">RustDesk ID (if applicable)</label>
+                    <input type="text" id="rustdesk-id" placeholder="Enter your RustDesk connection ID">
+                </div>
+                
+                <button id="send-issue-report" class="btn btn-primary">
+                    <i class="fas fa-exclamation-triangle"></i> Report Issue
+                </button>
+                
+                <div id="issue-form-status" class="form-status"></div>
+            </div>
+            
+            <!-- Hours Submission Form -->
+            <div id="hours-submission-form" class="notification-form">
+                <div class="form-group">
+                    <label for="hours-email">Your Email *</label>
+                    <input type="email" id="hours-email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="work-date">Work Date *</label>
+                    <input type="date" id="work-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="session-type">Session Type *</label>
+                    <select id="session-type" required>
+                        <option value="">Select session</option>
+                        <option value="first">First Session (6:30 PM - 9:30 PM)</option>
+                        <option value="second">Second Session (9:30 PM - 12:30 AM)</option>
+                        <option value="both">Both Sessions</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="hours-worked">Hours Worked *</label>
+                    <input type="number" id="hours-worked" step="0.5" min="0.5" max="6" placeholder="e.g., 3.0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rustdesk-id-hours">RustDesk ID *</label>
+                    <input type="text" id="rustdesk-id-hours" placeholder="Enter your RustDesk connection ID" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="hours-notes">Additional Notes (Optional)</label>
+                    <textarea id="hours-notes" placeholder="Any additional information about your work session..."></textarea>
+                </div>
+                
+                <button id="send-hours-submission" class="btn btn-primary">
+                    <i class="fas fa-clock"></i> Submit Hours
+                </button>
+                
+                <div id="hours-form-status" class="form-status"></div>
+            </div>
+            
+            <!-- Disconnection Report Form -->
+            <div id="disconnection-form" class="notification-form">
+                <div class="form-group">
+                    <label for="disconnect-email">Your Email *</label>
+                    <input type="email" id="disconnect-email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="disconnect-time">Disconnection Time *</label>
+                    <input type="datetime-local" id="disconnect-time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="disconnect-reason">Reason for Disconnection *</label>
+                    <select id="disconnect-reason" required>
+                        <option value="">Select reason</option>
+                        <option value="network">Network Issue</option>
+                        <option value="power">Power Outage</option>
+                        <option value="software">Software Crash</option>
+                        <option value="session-end">Session End Time</option>
+                        <option value="other">Other Reason</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rustdesk-id-disconnect">RustDesk ID *</label>
+                    <input type="text" id="rustdesk-id-disconnect" placeholder="Enter your RustDesk connection ID" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="disconnect-description">Description *</label>
+                    <textarea id="disconnect-description" placeholder="Describe what happened and any work lost..." required></textarea>
+                </div>
+                
+                <button id="send-disconnection-report" class="btn btn-primary">
+                    <i class="fas fa-plug"></i> Report Disconnection
+                </button>
+                
+                <div id="disconnect-form-status" class="form-status"></div>
             </div>
         </div>
 
@@ -908,6 +1180,10 @@
                     <i class="fas fa-desktop"></i>
                     <div><strong>You must have RustDesk installed.</strong> <a href="https://rustdesk.com/" target="_blank">Download here</a> if needed.</div>
                 </li>
+                <li>
+                    <i class="fas fa-bell"></i>
+                    <div><strong>Use notification forms above</strong> for quick reporting. No need to use your email client.</div>
+                </li>
             </ul>
         </div>
 
@@ -919,7 +1195,7 @@
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h4>Get Access</h4>
-                        <p>When project is available (green indicator), send request email or email directly to admin.</p>
+                        <p>When project is available (green indicator), use the "Access Request" form above.</p>
                         <p>You'll receive RustDesk ID and password via email.</p>
                         <ul>
                             <li><i class="fas fa-check"></i> Have RustDesk installed already</li>
@@ -950,6 +1226,7 @@
                             <li><i class="fas fa-check"></i> Average 10 minutes per task</li>
                             <li><i class="fas fa-check"></i> Keep Multimango score high</li>
                             <li><i class="fas fa-check"></i> Only work on assigned tasks</li>
+                            <li><i class="fas fa-check"></i> Report any issues using notification forms</li>
                         </ul>
                     </div>
                 </div>
@@ -960,10 +1237,10 @@
                         <h4>End of Session</h4>
                         <p>Before session ends (9:30 PM or 12:30 AM):</p>
                         <ul>
-                            <li><i class="fas fa-check"></i> Take screenshot of Hubstaff timer showing hours worked</li>
-                            <li><i class="fas fa-check"></i> Email screenshot + connection ID to aada.technology@gmail.com</li>
+                            <li><i class="fas fa-check"></i> Use "Submit Hours" form to report your work</li>
+                            <li><i class="fas fa-check"></i> Include RustDesk ID and hours worked</li>
                         </ul>
-                        <p><strong>If disconnected early:</strong> Email admin immediately with connection ID and session details.</p>
+                        <p><strong>If disconnected early:</strong> Use "Disconnection Report" form immediately.</p>
                     </div>
                 </div>
             </div>
@@ -974,8 +1251,8 @@
             
             <div class="tips-grid">
                 <div class="tip-item">
-                    <i class="fas fa-envelope"></i>
-                    <p>Email directly to admin for fastest response</p>
+                    <i class="fas fa-bell"></i>
+                    <p>Use notification forms for instant reporting</p>
                 </div>
                 
                 <div class="tip-item">
@@ -1004,7 +1281,7 @@
             <div class="announcement-content">
                 <h3>New Project - Limited Slots Available</h3>
                 <p>Beta Testing project for new annotation platform. First 50 applicants only.</p>
-                <p>Daily availability varies based on testing needs.</p>
+                <p>Use notification forms below for bug reports and feedback.</p>
             </div>
         </div>
 
@@ -1025,8 +1302,8 @@
             </div>
             
             <div class="info-item">
-                <h4><i class="fas fa-chart-line"></i> Reporting</h4>
-                <p>Detailed bug reports and feedback required</p>
+                <h4><i class="fas fa-envelope"></i> Reporting</h4>
+                <p>Use notification forms for all bug reports</p>
             </div>
         </div>
 
@@ -1041,120 +1318,113 @@
             <div id="email-form-beta" class="email-form" style="display: none;">
                 <div class="form-group">
                     <label for="user-email-beta">Your Email Address</label>
-                    <input type="email" id="user-email-beta" placeholder="your.email@example.com">
+                    <input type="email" id="user-email-beta" placeholder="your.email@example.com" required>
                 </div>
                 
                 <button id="request-access-beta" class="btn btn-primary">
                     <i class="fas fa-paper-plane"></i> Apply for Beta Testing
                 </button>
                 
-                <p id="form-status-beta" style="margin-top: 15px; color: #7f8c8d; font-size: 14px;"></p>
+                <div id="form-status-beta" class="form-status"></div>
             </div>
         </div>
 
-        <div class="warning-section">
-            <h3><i class="fas fa-exclamation-triangle"></i> Important Requirements</h3>
+        <!-- Notification Section for Beta -->
+        <div class="notification-section">
+            <h3><i class="fas fa-bell"></i> Beta Testing Notifications</h3>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Report bugs and submit feedback using these forms.</p>
             
-            <ul class="warning-list">
-                <li>
-                    <i class="fas fa-desktop"></i>
-                    <div><strong>Modern browser required</strong> (Chrome 90+, Firefox 88+, or Edge 90+)</div>
-                </li>
-                <li>
-                    <i class="fas fa-clipboard-check"></i>
-                    <div><strong>Detailed bug reports</strong> required for each testing session</div>
-                </li>
-                <li>
-                    <i class="fas fa-video"></i>
-                    <div><strong>Screen recording software</strong> recommended for documenting issues</div>
-                </li>
-                <li>
-                    <i class="fas fa-comment"></i>
-                    <div><strong>Feedback surveys</strong> must be completed after each session</div>
-                </li>
-            </ul>
-        </div>
-    </template>
-
-    <template id="sentinel-template">
-        <div class="announcement-banner">
-            <div class="announcement-icon">
-                <i class="fas fa-bullhorn"></i>
-            </div>
-            <div class="announcement-content">
-                <h3>Content Moderation Project</h3>
-                <p>24/7 availability. Work from anywhere with stable internet.</p>
-                <p>Training required before starting - complete 2-hour orientation.</p>
-            </div>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-item">
-                <h4><i class="fas fa-clock"></i> 24/7 Availability</h4>
-                <p>Work any time, day or night. Minimum 4-hour shifts.</p>
+            <div class="notification-tabs">
+                <div class="notification-tab active" data-form="beta-apply">Apply for Beta</div>
+                <div class="notification-tab" data-form="beta-bug">Report Bug</div>
+                <div class="notification-tab" data-form="beta-feedback">Submit Feedback</div>
             </div>
             
-            <div class="info-item">
-                <h4><i class="fas fa-graduation-cap"></i> Training Required</h4>
-                <p>Complete 2-hour orientation before starting</p>
-            </div>
-            
-            <div class="info-item">
-                <h4><i class="fas fa-shield-alt"></i> Content Type</h4>
-                <p>Social media content moderation</p>
-            </div>
-            
-            <div class="info-item">
-                <h4><i class="fas fa-headset"></i> Support</h4>
-                <p>24/7 supervisor support available</p>
-            </div>
-        </div>
-
-        <div class="availability-section">
-            <div id="availability-indicator-sentinel" class="availability-indicator available">
-                <i class="fas fa-check"></i>
-            </div>
-            
-            <div id="availability-text-sentinel" class="availability-text">Project Available 24/7</div>
-            <p id="availability-note-sentinel" class="availability-note">Always available. Complete orientation first before requesting access.</p>
-            
-            <div id="email-form-sentinel" class="email-form">
+            <!-- Beta Application Form -->
+            <div id="beta-apply-form" class="notification-form active">
                 <div class="form-group">
-                    <label for="user-email-sentinel">Your Email Address</label>
-                    <input type="email" id="user-email-sentinel" placeholder="your.email@example.com">
+                    <label for="beta-apply-email">Your Email *</label>
+                    <input type="email" id="beta-apply-email" placeholder="your.email@example.com" required>
                 </div>
                 
-                <button id="request-access-sentinel" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i> Request Orientation
+                <div class="form-group">
+                    <label for="beta-experience">Testing Experience Level *</label>
+                    <select id="beta-experience" required>
+                        <option value="">Select experience</option>
+                        <option value="beginner">Beginner - First time testing</option>
+                        <option value="intermediate">Intermediate - Some testing experience</option>
+                        <option value="advanced">Advanced - Professional tester</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beta-devices">Devices Available for Testing</label>
+                    <textarea id="beta-devices" placeholder="List devices you can test on (e.g., Windows PC, Mac, Android phone, iPhone)"></textarea>
+                </div>
+                
+                <button id="send-beta-application" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Submit Application
                 </button>
                 
-                <p id="form-status-sentinel" style="margin-top: 15px; color: #7f8c8d; font-size: 14px;"></p>
+                <div id="beta-apply-form-status" class="form-status"></div>
+            </div>
+            
+            <!-- Bug Report Form -->
+            <div id="beta-bug-form" class="notification-form">
+                <!-- Similar form structure for bug reports -->
+                <div class="form-group">
+                    <label for="beta-bug-email">Your Email *</label>
+                    <input type="email" id="beta-bug-email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beta-bug-severity">Bug Severity *</label>
+                    <select id="beta-bug-severity" required>
+                        <option value="">Select severity</option>
+                        <option value="critical">Critical - Breaks functionality</option>
+                        <option value="major">Major - Major issue</option>
+                        <option value="minor">Minor - Small issue</option>
+                        <option value="cosmetic">Cosmetic - Visual only</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beta-bug-description">Bug Description *</label>
+                    <textarea id="beta-bug-description" placeholder="Describe the bug in detail. Include steps to reproduce..." required></textarea>
+                </div>
+                
+                <button id="send-beta-bug" class="btn btn-primary">
+                    <i class="fas fa-bug"></i> Report Bug
+                </button>
+                
+                <div id="beta-bug-form-status" class="form-status"></div>
             </div>
         </div>
     </template>
 
     <!-- Footer -->
     <div class="footer">
-        <p>TaskingTasker Platform © 2026 | Contact: aada.technology@gmail.com</p>
-        <p style="margin-top: 10px; font-size: 12px;">Projects and availability subject to change. Check regularly for updates.</p>
+        <p>TaskingTasker Platform © 2024 | EmailJS notifications enabled</p>
+        <p style="margin-top: 10px; font-size: 12px;">All notifications are sent directly to admin team. No email client needed.</p>
     </div>
 
     <script>
-        // ===== CONFIGURATION =====
-        // EASILY ADD NEW PROJECTS HERE
+        // ===== EMAILJS CONFIGURATION =====
+        const EMAILJS_CONFIG = {
+            SERVICE_ID: 'YOUR_SERVICE_ID_HERE',      // Replace with your EmailJS service ID
+            TEMPLATE_ID: 'YOUR_TEMPLATE_ID_HERE',    // Replace with your EmailJS template ID
+            PUBLIC_KEY: 'YOUR_PUBLIC_KEY_HERE',      // Replace with your EmailJS public key
+            ADMIN_EMAIL: 'admin@taskingtasker.com'
+        };
+
+        // ===== PROJECTS CONFIGURATION =====
         const projectsConfig = {
-            // Admin email for all projects
-            adminEmail: 'aada.technology@gmail.com',
-            
-            // Project availability configuration
             availabilityConfig: {
-                // CONTROLLABLE VARIABLE: Set to true to force availability, false to force unavailability, or 'auto' for time-based
-                aether: 'auto',     // auto = checks work hours
-                beta: false,        // false = never available (project closed)
-                sentinel: false      // true = always available
+                aether: 'auto',
+                beta: false,
+                sentinel: true
             },
             
-            // Project gallery items
             projects: [
                 {
                     id: 'aether',
@@ -1165,7 +1435,7 @@
                     description: 'Data annotation project with scheduled work sessions. Requires RustDesk and Hubstaff.',
                     difficulty: 'intermediate',
                     hours: '6:30 PM - 12:30 AM',
-                    tags: ['Data Annotation', 'Scheduled', 'Remote Desktop'],
+                    tags: ['Data Annotation', 'Scheduled', 'Remote Desktop', 'EmailJS'],
                     template: 'aether-template'
                 },
                 {
@@ -1177,31 +1447,17 @@
                     description: 'Test new annotation platforms and report bugs. Flexible hours, browser-based work.',
                     difficulty: 'beginner',
                     hours: 'Flexible',
-                    tags: ['Testing', 'Flexible', 'Browser-based'],
+                    tags: ['Testing', 'Flexible', 'Browser-based', 'EmailJS'],
                     template: 'beta-template'
-                },
-                {
-                    id: 'sentinel',
-                    name: 'Sentinel',
-                    rate: '$4/hour',
-                    icon: 'fas fa-shield-alt',
-                    color: '#2ecc71',
-                    description: 'Content moderation with 24/7 availability. Requires orientation training first.',
-                    difficulty: 'advanced',
-                    hours: '24/7',
-                    tags: ['Moderation', '24/7', 'Training Required'],
-                    template: 'sentinel-template'
                 }
-                // TO ADD NEW PROJECTS:
-                // 1. Create a new template above (copy existing template)
-                // 2. Add project object here with template name
-                // 3. Add availability setting in availabilityConfig
-                // 4. Add availability logic in checkAvailability()
             ]
         };
 
         // ===== APPLICATION LOGIC =====
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize EmailJS
+            emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+            
             // DOM Elements
             const projectsGrid = document.getElementById('projects-grid');
             const instructionsArea = document.getElementById('instructions-area');
@@ -1212,7 +1468,6 @@
 
             // Current state
             let currentProject = null;
-            let emailInputs = {}; // Store email inputs for each project
 
             // Initialize projects gallery
             function initProjectsGallery() {
@@ -1280,73 +1535,289 @@
 
             // Initialize project-specific functionality
             function initProjectFunctionality(projectId) {
-                const adminEmail = projectsConfig.adminEmail;
-                
                 // Set up availability for this project
                 setupAvailability(projectId);
                 
-                // Get project-specific elements
-                const emailInput = document.getElementById(`user-email${projectId === 'aether' ? '' : '-' + projectId}`);
-                const requestBtn = document.getElementById(`request-access${projectId === 'aether' ? '' : '-' + projectId}`);
-                const emailDirectlyBtn = document.getElementById(`email-directly${projectId === 'aether' ? '' : '-' + projectId}`);
-                const formStatus = document.getElementById(`form-status${projectId === 'aether' ? '' : '-' + projectId}`);
+                // Set up notification tabs
+                setupNotificationTabs(projectId);
                 
-                if (emailInput) {
-                    // Save reference to email input
-                    emailInputs[projectId] = emailInput;
-                    
-                    // Load saved email
-                    const savedEmail = localStorage.getItem(`taskingtasker_email_${projectId}`);
-                    if (savedEmail) {
-                        emailInput.value = savedEmail;
-                    }
-                    
-                    // Save email on input
-                    emailInput.addEventListener('input', function() {
-                        if (isValidEmail(this.value)) {
-                            localStorage.setItem(`taskingtasker_email_${projectId}`, this.value);
-                        }
-                    });
-                }
+                // Set up form submissions
+                setupFormSubmissions(projectId);
                 
-                // Request access button
-                if (requestBtn) {
-                    requestBtn.addEventListener('click', function() {
-                        const userEmail = emailInput ? emailInput.value.trim() : '';
+                // Set up access request button (legacy)
+                setupLegacyAccessRequest(projectId);
+            }
+
+            // Set up notification tabs
+            function setupNotificationTabs(projectId) {
+                const tabs = document.querySelectorAll('.notification-tab');
+                const forms = document.querySelectorAll('.notification-form');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const formId = this.dataset.form;
                         
-                        if (!userEmail || !isValidEmail(userEmail)) {
-                            if (formStatus) {
-                                formStatus.textContent = 'Please enter a valid email address';
-                                formStatus.style.color = '#e74c3c';
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Show corresponding form
+                        forms.forEach(form => {
+                            form.classList.remove('active');
+                            if (form.id === `${formId}-form`) {
+                                form.classList.add('active');
                             }
+                        });
+                    });
+                });
+            }
+
+            // Set up form submissions with EmailJS
+            function setupFormSubmissions(projectId) {
+                // Aether project forms
+                if (projectId === 'aether') {
+                    setupAetherForms();
+                }
+                // Beta project forms
+                else if (projectId === 'beta') {
+                    setupBetaForms();
+                }
+            }
+
+            // Set up Aether project forms
+            function setupAetherForms() {
+                // Access Request Form
+                const accessRequestBtn = document.getElementById('send-access-request');
+                if (accessRequestBtn) {
+                    accessRequestBtn.addEventListener('click', function() {
+                        const email = document.getElementById('access-email').value.trim();
+                        const message = document.getElementById('access-message').value.trim();
+                        const statusDiv = document.getElementById('access-form-status');
+                        
+                        if (!isValidEmail(email)) {
+                            showFormStatus(statusDiv, 'Please enter a valid email address', 'error');
                             return;
                         }
                         
-                        const subject = `${currentProject.name} Project Access Request`;
-                        const body = `Hello,\n\nI would like to work on the ${currentProject.name} project.\n\nMy email: ${userEmail}\n\nI am ready to start.`;
-                        const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                        
-                        window.location.href = mailtoLink;
-                        
-                        if (formStatus) {
-                            formStatus.textContent = 'Email client opened. Please send the email to complete your request.';
-                            formStatus.style.color = '#2ecc71';
-                            
-                            setTimeout(() => {
-                                if (formStatus) formStatus.textContent = '';
-                            }, 5000);
-                        }
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: 'Aether',
+                            notification_type: 'Access Request',
+                            user_email: email,
+                            message: message || 'No additional notes provided.',
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, accessRequestBtn);
                     });
                 }
                 
-                // Email directly button
-                if (emailDirectlyBtn) {
-                    emailDirectlyBtn.addEventListener('click', function() {
-                        const subject = `${currentProject.name} Project Access Request`;
-                        const body = 'Hello,\n\nI would like to work on the ${currentProject.name} project.\n\nI am ready to start.\n\nThank you.';
-                        const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                // Issue Report Form
+                const issueReportBtn = document.getElementById('send-issue-report');
+                if (issueReportBtn) {
+                    issueReportBtn.addEventListener('click', function() {
+                        const email = document.getElementById('issue-email').value.trim();
+                        const issueType = document.getElementById('issue-type').value;
+                        const description = document.getElementById('issue-description').value.trim();
+                        const rustdeskId = document.getElementById('rustdesk-id').value.trim();
+                        const statusDiv = document.getElementById('issue-form-status');
                         
-                        window.location.href = mailtoLink;
+                        if (!isValidEmail(email)) {
+                            showFormStatus(statusDiv, 'Please enter a valid email address', 'error');
+                            return;
+                        }
+                        
+                        if (!issueType || !description) {
+                            showFormStatus(statusDiv, 'Please fill all required fields', 'error');
+                            return;
+                        }
+                        
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: 'Aether',
+                            notification_type: 'Issue Report',
+                            user_email: email,
+                            issue_type: issueType,
+                            description: description,
+                            rustdesk_id: rustdeskId || 'Not provided',
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, issueReportBtn);
+                    });
+                }
+                
+                // Hours Submission Form
+                const hoursSubmissionBtn = document.getElementById('send-hours-submission');
+                if (hoursSubmissionBtn) {
+                    hoursSubmissionBtn.addEventListener('click', function() {
+                        const email = document.getElementById('hours-email').value.trim();
+                        const workDate = document.getElementById('work-date').value;
+                        const sessionType = document.getElementById('session-type').value;
+                        const hoursWorked = document.getElementById('hours-worked').value;
+                        const rustdeskId = document.getElementById('rustdesk-id-hours').value.trim();
+                        const notes = document.getElementById('hours-notes').value.trim();
+                        const statusDiv = document.getElementById('hours-form-status');
+                        
+                        if (!isValidEmail(email) || !workDate || !sessionType || !hoursWorked || !rustdeskId) {
+                            showFormStatus(statusDiv, 'Please fill all required fields', 'error');
+                            return;
+                        }
+                        
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: 'Aether',
+                            notification_type: 'Hours Submission',
+                            user_email: email,
+                            work_date: workDate,
+                            session_type: sessionType,
+                            hours_worked: hoursWorked,
+                            rustdesk_id: rustdeskId,
+                            additional_notes: notes || 'None',
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, hoursSubmissionBtn);
+                    });
+                }
+                
+                // Disconnection Report Form
+                const disconnectionBtn = document.getElementById('send-disconnection-report');
+                if (disconnectionBtn) {
+                    disconnectionBtn.addEventListener('click', function() {
+                        const email = document.getElementById('disconnect-email').value.trim();
+                        const disconnectTime = document.getElementById('disconnect-time').value;
+                        const reason = document.getElementById('disconnect-reason').value;
+                        const rustdeskId = document.getElementById('rustdesk-id-disconnect').value.trim();
+                        const description = document.getElementById('disconnect-description').value.trim();
+                        const statusDiv = document.getElementById('disconnect-form-status');
+                        
+                        if (!isValidEmail(email) || !disconnectTime || !reason || !rustdeskId || !description) {
+                            showFormStatus(statusDiv, 'Please fill all required fields', 'error');
+                            return;
+                        }
+                        
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: 'Aether',
+                            notification_type: 'Disconnection Report',
+                            user_email: email,
+                            disconnect_time: disconnectTime,
+                            reason: reason,
+                            rustdesk_id: rustdeskId,
+                            description: description,
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, disconnectionBtn);
+                    });
+                }
+            }
+
+            // Set up Beta project forms
+            function setupBetaForms() {
+                // Beta Application Form
+                const betaApplyBtn = document.getElementById('send-beta-application');
+                if (betaApplyBtn) {
+                    betaApplyBtn.addEventListener('click', function() {
+                        const email = document.getElementById('beta-apply-email').value.trim();
+                        const experience = document.getElementById('beta-experience').value;
+                        const devices = document.getElementById('beta-devices').value.trim();
+                        const statusDiv = document.getElementById('beta-apply-form-status');
+                        
+                        if (!isValidEmail(email) || !experience) {
+                            showFormStatus(statusDiv, 'Please fill all required fields', 'error');
+                            return;
+                        }
+                        
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: 'Beta Testing',
+                            notification_type: 'Beta Application',
+                            user_email: email,
+                            experience_level: experience,
+                            available_devices: devices || 'Not specified',
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, betaApplyBtn);
+                    });
+                }
+            }
+
+            // Set up legacy access request (for backward compatibility)
+            function setupLegacyAccessRequest(projectId) {
+                const requestBtn = document.getElementById(`request-access${projectId === 'aether' ? '' : '-' + projectId}`);
+                const emailInput = document.getElementById(`user-email${projectId === 'aether' ? '' : '-' + projectId}`);
+                const statusDiv = document.getElementById(`form-status${projectId === 'aether' ? '' : '-' + projectId}`);
+                
+                if (requestBtn && emailInput && statusDiv) {
+                    requestBtn.addEventListener('click', function() {
+                        const userEmail = emailInput.value.trim();
+                        
+                        if (!isValidEmail(userEmail)) {
+                            showFormStatus(statusDiv, 'Please enter a valid email address', 'error');
+                            return;
+                        }
+                        
+                        sendEmailNotification({
+                            to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+                            project_name: currentProject.name,
+                            notification_type: 'Legacy Access Request',
+                            user_email: userEmail,
+                            message: 'Request sent via legacy access button',
+                            timestamp: new Date().toLocaleString()
+                        }, statusDiv, requestBtn);
+                    });
+                }
+            }
+
+            // Send email notification using EmailJS
+            function sendEmailNotification(templateParams, statusDiv, button) {
+                // Show sending status
+                showFormStatus(statusDiv, 'Sending notification...', 'sending');
+                if (button) button.disabled = true;
+                
+                emailjs.send(
+                    EMAILJS_CONFIG.SERVICE_ID,
+                    EMAILJS_CONFIG.TEMPLATE_ID,
+                    templateParams
+                ).then(function(response) {
+                    showFormStatus(statusDiv, 'Notification sent successfully!', 'success');
+                    
+                    // Clear form fields
+                    clearFormFields(statusDiv.id.replace('-form-status', '-form'));
+                    
+                    // Re-enable button after delay
+                    if (button) {
+                        setTimeout(() => {
+                            button.disabled = false;
+                        }, 3000);
+                    }
+                    
+                    // Clear success message after 5 seconds
+                    setTimeout(() => {
+                        statusDiv.className = 'form-status';
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                    
+                }, function(error) {
+                    console.error('EmailJS error:', error);
+                    showFormStatus(statusDiv, `Failed to send: ${error.text || 'Please try again'}`, 'error');
+                    
+                    if (button) button.disabled = false;
+                });
+            }
+
+            // Show form status
+            function showFormStatus(element, message, type) {
+                element.textContent = message;
+                element.className = `form-status ${type}`;
+                element.style.display = 'block';
+                
+                if (type === 'sending') {
+                    element.innerHTML = `<i class="fas fa-spinner"></i> ${message}`;
+                }
+            }
+
+            // Clear form fields
+            function clearFormFields(formId) {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.querySelectorAll('input, textarea, select').forEach(field => {
+                        if (field.type !== 'button' && field.type !== 'submit') {
+                            field.value = '';
+                        }
                     });
                 }
             }
@@ -1371,14 +1842,14 @@
                         isAvailable = checkTimeAvailability();
                         message = isAvailable ? 'Project Available Now!' : 'Project Not Available';
                         noteText = isAvailable 
-                            ? 'Currently in work session. Click below to request access.'
+                            ? 'Currently in work session. Use notification forms below.'
                             : 'Check back during work session times (6:30 PM - 9:30 PM or 9:30 PM - 12:30 AM)';
                         break;
                         
                     case true:
                         isAvailable = true;
                         message = 'Project Available';
-                        noteText = 'Always available. Request access below.';
+                        noteText = 'Always available. Use notification forms below.';
                         break;
                         
                     case false:
@@ -1396,17 +1867,6 @@
                 
                 if (emailForm) {
                     emailForm.style.display = isAvailable ? 'block' : 'none';
-                }
-                
-                // Make indicator clickable if available
-                if (isAvailable && emailForm) {
-                    indicator.style.cursor = 'pointer';
-                    indicator.onclick = function() {
-                        emailForm.scrollIntoView({ behavior: 'smooth' });
-                    };
-                } else {
-                    indicator.style.cursor = 'default';
-                    indicator.onclick = null;
                 }
             }
 
@@ -1438,6 +1898,12 @@
                 return false;
             }
 
+            // Email validation
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+
             // Back to gallery button
             backToGalleryBtn.addEventListener('click', function() {
                 instructionsArea.classList.remove('active');
@@ -1445,15 +1911,8 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
-            // Email validation
-            function isValidEmail(email) {
-                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return re.test(email);
-            }
-
             // Update availability periodically for auto projects
             function updateAvailabilityPeriodically() {
-                // Check all auto-configured projects
                 Object.keys(projectsConfig.availabilityConfig).forEach(projectId => {
                     if (projectsConfig.availabilityConfig[projectId] === 'auto') {
                         setupAvailability(projectId);
